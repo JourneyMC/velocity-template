@@ -31,4 +31,4 @@ services:
       - db_data:/var/lib/mysql
       - ./database:/docker-entrypoint-initdb.d
     env_file:
-      - ./servers/velocity/secrets/velocity_db.env
+      - ./secrets/db.env
