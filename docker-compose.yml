@@ -1,21 +1,16 @@
 version: '3.9'
 
 networks:
-  mcnetwork:
-    external: true
-    name: velocity
+  velocity:
     driver: bridge
 
 volumes:
+  plugin_data:
   db_data:
-    name: velocity_db_data
 
 services:
-  velocity:
-    container_name: velocity
-    build:
-      context: .
-      dockerfile: servers/velocity/Dockerfile
+  proxy:
+    build: .
     restart: unless-stopped
     depends_on:
       - db
@@ -26,15 +21,14 @@ services:
       HEAP_SIZE: '1G'
     ports:
       - "25565:25577"
+    volumes:
+      - plugin_data:/plugin_data
 
   db:
-    container_name: velocity_db
     image: mariadb
     restart: unless-stopped
-    networks:
-      - velocity
     volumes:
       - db_data:/var/lib/mysql
-      - ./servers/velocity/database:/docker-entrypoint-initdb.d
+      - ./database:/docker-entrypoint-initdb.d
     env_file:
       - ./servers/velocity/secrets/velocity_db.env
