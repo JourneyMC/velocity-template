@@ -20,7 +20,7 @@ services:
     environment:
       HEAP_SIZE: '1G'
     ports:
-      - "25565:25577"
+      - "25577:25577"
     volumes:
       - plugin_data:/plugin_data
 
