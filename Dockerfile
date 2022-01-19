@@ -4,6 +4,7 @@ FROM eclipse-temurin:11-alpine
 RUN apk add --no-cache \
     bash \
     gettext \
+    su-exec \
     tini
 
 # UID & GID for non-root user
@@ -35,35 +36,32 @@ ENV VELOCITY_JAR_URL=$velocity_jar_url
 # Add the Velocity jar
 ADD --chown=nonroot:nonroot ${VELOCITY_JAR_URL} /opt/velocity/velocity.jar
 
-# Entrypoint
-ENTRYPOINT ["/sbin/tini", "--", "java", "-jar", "/opt/velocity/velocity.jar"]
-
 # Copy scripts
-COPY --chown=nonroot:nonroot scripts/ /usr/local/bin/
+COPY scripts/ /usr/local/bin/
+RUN chmod -R +x /usr/local/bin
+
+# Entrypoint
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
 # Copy secrets
 ARG secrets_path=/.secrets
-COPY --chown=nonroot:nonroot secrets/ $secrets_path
+COPY secrets/ $secrets_path
 
 # Copy server files
 ARG data_path=/home/nonroot/velocity
+ENV DATA_PATH=$data_path
 COPY --chown=nonroot:nonroot server/ $data_path
 
 # Create data dirs
 ARG plugin_data_path=/plugin_data
-RUN mkdir -p $plugin_data_path \
-  && chown -R nonroot:nonroot $plugin_data_path
-
-# Switch user to run as non-root
-USER nonroot
-
-# Substitute envvars
-RUN bash /usr/local/bin/substitute_envvars.sh ${data_path} ${secrets_path}
+ENV PLUGIN_DATA_PATH=$plugin_data_path
+RUN mkdir -p $plugin_data_path $data_path/logs \
+  && chown -R nonroot:nonroot $plugin_data_path $data_path/logs
 
 # Persistent data
 VOLUME $plugin_data_path $data_path/logs
 
-# Initialize plugin data
-RUN bash /usr/local/bin/init_plugindata.sh ${data_path}/plugins ${plugin_data_path}
+# Substitute envvars
+RUN /usr/local/bin/substitute_envvars.sh ${data_path} ${secrets_path}
 
 WORKDIR $data_path
