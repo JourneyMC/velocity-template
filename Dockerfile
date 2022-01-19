@@ -46,7 +46,7 @@ ARG secrets_path=/.secrets
 COPY --chown=nonroot:nonroot secrets/ $secrets_path
 
 # Copy server files
-ARG data_dir=/home/nonroot/velocity
+ARG data_path=/home/nonroot/velocity
 COPY --chown=nonroot:nonroot server/ $data_path
 
 # Create data dirs
